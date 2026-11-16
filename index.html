@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Shape Detective · Quadrilateral clues</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0b1a2e 0%, #1b2f44 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .game-container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 48px;
+            padding: 28px 30px;
+            box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.6), inset 0 1px 4px rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 2.3rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: #eef7ff;
+            text-shadow: 0 4px 12px rgba(0, 30, 60, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .subhead {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #b3d9ff;
+            font-weight: 400;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .timer-panel {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(0, 20, 40, 0.7);
+            padding: 8px 18px;
+            border-radius: 60px;
+            backdrop-filter: blur(6px);
+            border: 1px solid #3e6a8c;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+        }
+
+        .timer-display {
+            font-size: 2.2rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: #9ff0ff;
+            text-shadow: 0 0 12px #00b7ff;
+            letter-spacing: 2px;
+            min-width: 100px;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #245b7c;
+            border: none;
+            border-radius: 40px;
+            padding: 8px 18px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #e7f3ff;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 6px 0 #0e2a3b, 0 6px 12px rgba(0,0,0,0.4);
+            border: 1px solid #5b95b8;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #0e2a3b, 0 8px 14px rgba(0,0,0,0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #0e2a3b;
+            pointer-events: none;
+            filter: grayscale(0.4);
+        }
+
+        button.secondary {
+            background: #1f3d53;
+            box-shadow: 0 4px 0 #0a1d2a, 0 4px 10px rgba(0,0,0,0.3);
+            border-color: #3e6b85;
+            padding: 6px 14px;
+        }
+
+        .lives {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: #0f2637;
+            padding: 8px 20px;
+            border-radius: 40px;
+            border: 1px solid #b8394c;
+            box-shadow: 0 0 12px rgba(255, 80, 100, 0.4);
+        }
+
+        .lives-icon {
+            font-size: 2rem;
+            line-height: 1;
+            color: #ff4d6d;
+            text-shadow: 0 0 10px #ff1a4f;
+            transition: 0.2s;
+        }
+
+        .lives-icon.dead {
+            color: #3f4e5e;
+            text-shadow: none;
+            opacity: 0.35;
+            transform: scale(0.9);
+        }
+
+        .difficulty-badge {
+            background: #132c3e;
+            padding: 6px 22px;
+            border-radius: 40px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #aad6ff;
+            border: 1px solid #4f8bb0;
+            font-size: 1rem;
+        }
+
+        .hint-box {
+            background: #0d1f2c;
+            border-radius: 28px;
+            padding: 22px 26px;
+            margin: 20px 0 18px;
+            border-left: 6px solid #3fc3ff;
+            box-shadow: inset 0 0 18px rgba(0, 150, 255, 0.15), 0 10px 20px -8px black;
+        }
+
+        .hint-text {
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: #f0faff;
+            line-height: 1.4;
+            letter-spacing: -0.3px;
+            word-break: break-word;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin: 18px 0 20px;
+        }
+
+        .option-btn {
+            background: #1f3348;
+            border: 2px solid #2e5f7a;
+            border-radius: 40px;
+            padding: 16px 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #d2eaff;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 0 8px 0 #0b1822, 0 8px 18px rgba(0,0,0,0.5);
+            letter-spacing: 0.3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            text-transform: capitalize;
+        }
+
+        .option-btn.selected {
+            background: #0e6390;
+            border-color: #8fd6ff;
+            color: white;
+            box-shadow: 0 0 18px #0099ff, 0 8px 0 #062535;
+            transform: scale(1.01);
+        }
+
+        .option-btn.correct-highlight {
+            background: #1c7e4b;
+            border-color: #78ffb0;
+            color: #e5ffe5;
+            box-shadow: 0 0 24px #00e676;
+        }
+
+        .option-btn.wrong-highlight {
+            background: #962f3f;
+            border-color: #ff8a9c;
+            color: #ffe5e9;
+            box-shadow: 0 0 20px #ff3b5c;
+        }
+
+        .feedback-panel {
+            background: #0f1f2e;
+            border-radius: 28px;
+            padding: 16px 22px;
+            margin: 12px 0 16px;
+            border: 1px solid #3c6b86;
+            color: #dcf0ff;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            min-height: 90px;
+        }
+
+        .diagram-box {
+            background: #0a1723;
+            border-radius: 24px;
+            padding: 12px 18px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 18px;
+            margin-top: 8px;
+            border: 1px dashed #3d7290;
+        }
+
+        .diagram-box svg {
+            max-width: 100%;
+            height: auto;
+            filter: drop-shadow(0 6px 12px #00000080);
+        }
+
+        .diagram-caption {
+            font-size: 1rem;
+            color: #a9cbe4;
+            font-weight: 400;
+            text-align: center;
+        }
+
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .score-area {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffe484;
+            text-shadow: 0 0 12px #ffbb00;
+            background: #1a2e3e;
+            padding: 6px 26px;
+            border-radius: 40px;
+            border: 1px solid #c9a03d;
+        }
+
+        .skip-counter {
+            background: #1a2d3e;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: #ffb7b7;
+            border: 1px solid #a54b5c;
+        }
+
+        .game-over-message {
+            color: #ffd966;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 12px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+<div class="game-container" id="gameContainer">
+    <h1>
+        🔍 AI Shape Detective
+        <span class="difficulty-badge" id="difficultyBadge">Easy</span>
+    </h1>
+
+    <div class="subhead">
+        <div class="timer-panel">
+            <div class="timer-display" id="timerDisplay">60</div>
+            <div class="timer-controls">
+                <button id="startPauseBtn" title="Start / pause timer">▶ Start</button>
+                <button id="resetTimerBtn" class="secondary" title="Reset timer">⟲ Reset</button>
+                <input type="number" id="timeLimitInput" min="10" max="180" value="60" step="5" style="width:70px; border-radius:30px; padding:6px 10px; background:#0d1e2c; border:1px solid #3b789b; color:white; font-weight:600; text-align:center;">
+            </div>
+        </div>
+        <div class="lives" id="livesContainer">
+            <span class="lives-icon" id="life1">❤️</span>
+            <span class="lives-icon" id="life2">❤️</span>
+            <span class="lives-icon" id="life3">❤️</span>
+            <span class="lives-icon" id="life4">❤️</span>
+            <span class="lives-icon" id="life5">❤️</span>
+        </div>
+    </div>
+
+    <div class="hint-box">
+        <div class="hint-text" id="hintText">Loading question…</div>
+    </div>
+
+    <div class="options-grid" id="optionsGrid">
+        <!-- buttons injected by JS -->
+    </div>
+
+    <div class="feedback-panel" id="feedbackPanel">
+        Select all quadrilaterals that match the clue. (You can pick multiple)
+    </div>
+
+    <div class="diagram-box" id="diagramBox">
+        <!-- dynamic SVG diagram -->
+        <div class="diagram-caption">✏️ Graphical explanation appears here</div>
+    </div>
+
+    <div class="action-bar">
+        <div class="score-area" id="scoreDisplay">🏆 0</div>
+        <div class="skip-counter" id="skipCounter">⏭️ Skips left: 5</div>
+        <div>
+            <button id="submitBtn">✅ Submit answer</button>
+            <button id="skipBtn" class="secondary">⏭️ Skip</button>
+        </div>
+    </div>
+
+    <div id="gameOverMsg" class="game-over-message"></div>
+</div>
+
+<script>
+    (function() {
+        // ---------- QUADRILATERAL DATA ----------
+        const QUADS = ['square', 'rhombus', 'trapezium', 'kite', 'rectangle', 'parallelogram'];
+
+        // Each question: hint, correct answers array, difficulty, diagram description
+        const RAW_QUESTIONS = [
+            // EASY (20+)
+            { hint: "All four sides are equal", answers: ['square', 'rhombus'], difficulty: 'easy', diagram: 'rhombus' },
+            { hint: "Diagonals bisect each other", answers: ['square', 'rhombus', 'rectangle', 'parallelogram'], difficulty: 'easy', diagram: 'parallelogram' },
+            { hint: "Opposite sides are parallel and equal", answers: ['square', 'rhombus', 'rectangle', 'parallelogram'], difficulty: 'easy', diagram: 'parallelogram' },
+            { hint: "All angles are right angles", answers: ['square', 'rectangle'], difficulty: 'easy', diagram: 'rectangle' },
+            { hint: "Diagonals are perpendicular to each other", answers: ['square', 'rhombus', 'kite'], difficulty: 'easy', diagram: 'kite' },
+            { hint: "Exactly one pair of opposite sides are parallel", answers: ['trapezium'], difficulty: 'easy', diagram: 'trapezium' },
+            { hint: "Two pairs of adjacent sides are equal", answers: ['kite'], difficulty: 'easy', diagram: 'kite' },
+            { hint: "Opposite angles are equal", answers: ['square', 'rhombus', 'rectangle', 'parallelogram'], difficulty: 'easy', diagram: 'parallelogram' },
+            { hint: "Diagonals are equal in length", answers: ['square', 'rectangle'], difficulty: 'easy', diagram: 'rectangle' },
+            { hint: "Diagonals bisect each other at right angles", answers: ['square', 'rhombus'], difficulty: 'easy', diagram: 'rhombus' },
+            { hint: "Adjacent sides are perpendicular to each other", answers: ['square', 'rectangle'], difficulty: 'easy', diagram: 'rectangle' },
+            { hint: "Each diagonal bisects opposite angles", answers: ['square', 'rhombus'], difficulty: 'easy', diagram: 'rhombus' },
+            { hint: "At least one pair of parallel sides", answers: ['square', 'rhombus', 'rectangle', 'parallelogram', 'trapezium'], difficulty: 'easy', diagram: 'trapezium' },
+            { hint: "All sides are equal and all angles are 90°", answers: ['square'], difficulty: 'easy', diagram: 'square' },
+            { hint: "A quadrilateral with two distinct pairs of equal-length adjacent sides", answers: ['kite'], difficulty: 'easy', diagram: 'kite' },
+            { hint: "Both pairs of opposite sides are parallel", answers: ['square', 'rhombus', 'rectangle', 'parallelogram'], difficulty: 'easy', diagram: 'parallelogram' },
+            { hint: "Diagonals cut each other into equal halves", answers: ['square', 'rhombus', 'rectangle', 'parallelogram'], difficulty: 'easy', diagram: 'parallelogram' },
+            { hint: "It has four right angles", answers: ['square', 'rectangle'], difficulty: 'easy', diagram: 'rectangle' },
+            { hint: "Its diagonals are perpendicular bisectors of each other", answers: ['square', 'rhombus'], difficulty: 'easy', diagram: 'rhombus' },
+            { hint: "Exactly one line of symmetry (if non‑square)", answers: ['kite', 'trapezium'], difficulty: 'easy', diagram: 'kite' },
+            { hint: "Opposite sides are parallel but angles are not 90°", answers: ['rhombus', 'parallelogram'], difficulty: 'easy', diagram: 'parallelogram' },
+            { hint: "All sides equal, diagonals not necessarily equal", answers: ['rhombus'], difficulty: 'easy', diagram: 'rhombus' },
+
+            // MEDIUM (20+)
+            { hint: "Diagonals are perpendicular and bisect each other, but not equal", answers: ['rhombus'], difficulty: 'medium', diagram: 'rhombus' },
+            { hint: "Diagonals are equal and bisect each other, but not perpendicular", answers: ['rectangle'], difficulty: 'medium', diagram: 'rectangle' },
+            { hint: "Diagonals are equal, perpendicular and bisect each other", answers: ['square'], difficulty: 'medium', diagram: 'square' },
+            { hint: "It has exactly one pair of parallel sides and no equal sides", answers: ['trapezium'], difficulty: 'medium', diagram: 'trapezium' },
+            { hint: "Adjacent sides are equal, but opposite sides are not", answers: ['kite'], difficulty: 'medium', diagram: 'kite' },
+            { hint: "Opposite angles are equal, diagonals not perpendicular", answers: ['rectangle', 'parallelogram'], difficulty: 'medium', diagram: 'parallelogram' },
+            { hint: "Both pairs of opposite sides equal, but no right angles", answers: ['rhombus', 'parallelogram'], difficulty: 'medium', diagram: 'parallelogram' },
+            { hint: "Diagonals bisect vertex angles, but are not equal", answers: ['rhombus'], difficulty: 'medium', diagram: 'rhombus' },
+            { hint: "All angles equal, but sides not necessarily equal", answers: ['rectangle'], difficulty: 'medium', diagram: 'rectangle' },
+            { hint: "A parallelogram with perpendicular diagonals", answers: ['rhombus', 'square'], difficulty: 'medium', diagram: 'rhombus' },
+            { hint: "A parallelogram with equal diagonals", answers: ['rectangle', 'square'], difficulty: 'medium', diagram: 'rectangle' },
+            { hint: "It has two pairs of parallel sides and all sides equal", answers: ['rhombus', 'square'], difficulty: 'medium', diagram: 'rhombus' },
+            { hint: "Exactly one pair of opposite sides parallel, legs equal", answers: ['trapezium'], difficulty: 'medium', diagram: 'trapezium' },
+            { hint: "The diagonals are perpendicular and one diagonal is bisected", answers: ['kite'], difficulty: 'medium', diagram: 'kite' },
+            { hint: "It is both a rectangle and a rhombus", answers: ['square'], difficulty: 'medium', diagram: 'square' },
+            { hint: "Opposite sides parallel, one angle 90°", answers: ['rectangle', 'square'], difficulty: 'medium', diagram: 'rectangle' },
+            { hint: "Diagonals form four congruent triangles", answers: ['square', 'rhombus', 'rectangle', 'parallelogram'], difficulty: 'medium', diagram: 'parallelogram' },
+            { hint: "Two pairs of adjacent sides equal, one pair of opposite angles equal", answers: ['kite'], difficulty: 'medium', diagram: 'kite' },
+            { hint: "Diagonals are not equal, but bisect each other", answers: ['rhombus', 'parallelogram'], difficulty: 'medium', diagram: 'parallelogram' },
+            { hint: "A trapezium with one pair of opposite sides parallel and equal", answers: ['parallelogram'], difficulty: 'medium', diagram: 'parallelogram' },
+            { hint: "It has rotational symmetry of order 2 but no lines of symmetry", answers: ['parallelogram'], difficulty: 'medium', diagram: 'parallelogram' },
+
+            // HARD (20+)
+            { hint: "Diagonals are perpendicular, bisect each other and are equal", answers: ['square'], difficulty: 'hard', diagram: 'square' },
+            { hint: "Diagonals are perpendicular and bisect each other but not equal", answers: ['rhombus'], difficulty: 'hard', diagram: 'rhombus' },
+            { hint: "Diagonals are equal and bisect each other but not perpendicular", answers: ['rectangle'], difficulty: 'hard', diagram: 'rectangle' },
+            { hint: "Diagonals bisect each other, one diagonal bisects opposite angles", answers: ['rhombus', 'square'], difficulty: 'hard', diagram: 'rhombus' },
+            { hint: "A quadrilateral with perpendicular diagonals, one of which is bisected", answers: ['kite'], difficulty: 'hard', diagram: 'kite' },
+            { hint: "It has exactly one pair of parallel sides and the non-parallel sides are equal", answers: ['trapezium'], difficulty: 'hard', diagram: 'trapezium' },
+            { hint: "All sides equal and diagonals equal", answers: ['square'], difficulty: 'hard', diagram: 'square' },
+            { hint: "Opposite sides parallel, diagonals perpendicular but not equal", answers: ['rhombus'], difficulty: 'hard', diagram: 'rhombus' },
+            { hint: "Opposite sides parallel, diagonals equal but not perpendicular", answers: ['rectangle'], difficulty: 'hard', diagram: 'rectangle' },
+            { hint: "Diagonals bisect each other, each diagonal bisects opposite angles", answers: ['rhombus', 'square'], difficulty: 'hard', diagram: 'rhombus' },
+            { hint: "A kite with all angles equal", answers: ['square'], difficulty: 'hard', diagram: 'square' },
+            { hint: "A parallelogram with one right angle and adjacent sides equal", answers: ['square'], difficulty: 'hard', diagram: 'square' },
+            { hint: "A trapezium where diagonals are equal and bisect each other", answers: ['rectangle', 'square'], difficulty: 'hard', diagram: 'rectangle' },
+            { hint: "Diagonals are equal, perpendicular and bisect opposite angles", answers: ['square'], difficulty: 'hard', diagram: 'square' },
+            { hint: "It has two pairs of parallel sides and diagonals perpendicular", answers: ['rhombus', 'square'], difficulty: 'hard', diagram: 'rhombus' },
+            { hint: "It has two pairs of parallel sides and diagonals equal", answers: ['rectangle', 'square'], difficulty: 'hard', diagram: 'rectangle' },
+            { hint: "Exactly one pair of parallel sides, diagonals equal", answers: ['trapezium'], difficulty: 'hard', diagram: 'trapezium' },
+            { hint: "Adjacent sides equal, diagonals perpendicular, one diagonal bisected", answers: ['kite'], difficulty: 'hard', diagram: 'kite' },
+            { hint: "Both pairs of opposite angles equal, diagonals not perpendicular", answers: ['rectangle', 'parallelogram'], difficulty: 'hard', diagram: 'parallelogram' },
+            { hint: "Both pairs of opposite sides equal, diagonals perpendicular", answers: ['rhombus', 'square'], difficulty: 'hard', diagram: 'rhombus' },
+            { hint: "A quadrilateral with four equal sides and four right angles", answers: ['square'], difficulty: 'hard', diagram: 'square' },
+        ];
+
+        // Build question pools by difficulty (shuffled later)
+        const pools = {
+            easy: RAW_QUESTIONS.filter(q => q.difficulty === 'easy'),
+            medium: RAW_QUESTIONS.filter(q => q.difficulty === 'medium'),
+            hard: RAW_QUESTIONS.filter(q => q.difficulty === 'hard')
+        };
+
+        // Ensure at least 20 each (they already are)
+        // State
+        let currentQuestion = null;
+        let currentDifficulty = 'easy';
+        let selectedOptions = new Set();
+        let skipsLeft = 5;
+        let score = 0;
+        let timerInterval = null;
+        let timeLeft = 60;
+        let timerRunning = false;
+        let gameActive = true;
+        let answered = false;           // whether current question is answered/skipped (locks)
+        let gameOver = false;
+
+        // DOM elements
+        const hintText = document.getElementById('hintText');
+        const optionsGrid = document.getElementById('optionsGrid');
+        const feedbackPanel = document.getElementById('feedbackPanel');
+        const diagramBox = document.getElementById('diagramBox');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const skipCounter = document.getElementById('skipCounter');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startPauseBtn = document.getElementById('startPauseBtn');
+        const resetTimerBtn = document.getElementById('resetTimerBtn');
+        const timeLimitInput = document.getElementById('timeLimitInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const skipBtn = document.getElementById('skipBtn');
+        const difficultyBadge = document.getElementById('difficultyBadge');
+        const gameOverMsg = document.getElementById('gameOverMsg');
+        const livesIcons = [
+            document.getElementById('life1'),
+            document.getElementById('life2'),
+            document.getElementById('life3'),
+            document.getElementById('life4'),
+            document.getElementById('life5')
+        ];
+
+        // ---------- UTILS ----------
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Prepare a new game (reset everything, shuffle questions, set difficulty easy)
+        let gameQuestionQueue = [];
+
+        function initGame() {
+            // Reset state
+            score = 0;
+            skipsLeft = 5;
+            gameOver = false;
+            answered = false;
+            selectedOptions.clear();
+            gameActive = true;
+            timerRunning = false;
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timeLeft = parseInt(timeLimitInput.value, 10) || 60;
+            timerDisplay.textContent = timeLeft;
+            startPauseBtn.textContent = '▶ Start';
+            gameOverMsg.textContent = '';
+
+            // Reset lives
+            livesIcons.forEach(icon => icon.classList.remove('dead'));
+
+            // Shuffle all questions, but we will pick based on difficulty progression
+            // We'll create a master queue: each difficulty pool shuffled separately
+            const shuffledEasy = shuffleArray([...pools.easy]);
+            const shuffledMedium = shuffleArray([...pools.medium]);
+            const shuffledHard = shuffleArray([...pools.hard]);
+
+            // Build a queue: start with easy, then medium, then hard, but ensure we never run out
+            // We'll cycle difficulty as we go: after 6 easy -> medium -> etc. but easier: pick sequentially with increasing difficulty
+            // But simplest: concatenate all, then sort by difficulty order (easy, medium, hard)
+            // And shuffle within each difficulty (already shuffled)
+            gameQuestionQueue = [
+                ...shuffledEasy.slice(0, 30),   // plenty
+                ...shuffledMedium.slice(0, 30),
+                ...shuffledHard.slice(0, 30)
+            ];
+            // But we want variety: instead just use a pointer, but we will pick from the front and cycle
+            // To follow "cannot choose difficulty": we automatically assign easy first, then medium, then hard as questions progress
+            // We'll implement: first 6 questions easy, next 7 medium, then hard and beyond keep mixing.
+            // Actually better: use a queue where difficulty is determined by progress.
+            // We'll store all questions and pick by difficulty based on number asked.
+            // Reset progress index
+            window.gameProgress = 0;
+            window.askedCount = 0;
+
+            // We'll use a simpler method: maintain a pool of all questions (shuffled) but difficulty is assigned automatically
+            // We'll use the concatenated list above but reorder to ensure first many are easy.
+            // Let's rebuild: we want first 8 easy, next 7 medium, then mix.
+            const easyPart = shuffledEasy.slice(0, 15);
+            const mediumPart = shuffledMedium.slice(0, 15);
+            const hardPart = shuffledHard.slice(0, 15);
+            // Interleave to ensure variety: easy, easy, medium, easy, medium, hard, ...
+            // Actually requirement: players cannot choose difficulty. So we just serve questions in a preset difficulty order.
+            // We'll use a deterministic pattern: 3 easy, 2 medium, 2 easy, 2 medium, 1 hard, then repeat.
+            // Simpler: We'll just pick randomly from all, but set difficulty label based on actual question difficulty.
+            // That satisfies "cannot choose difficulty". So just use combined shuffled list.
+            const allShuffled = shuffleArray([...RAW_QUESTIONS]);
+            gameQuestionQueue = allShuffled;
+
+            // Load first question
+            loadNextQuestion();
+        }
+
+        // Load next question from queue
+        function loadNextQuestion() {
+            if (gameQuestionQueue.length === 0) {
+                // No more questions: end game
+                endGame('🏁 No more questions! Game over.');
+                return;
+            }
+            if (!gameActive || gameOver) return;
+
+            // If skips left are zero, we can still answer questions but cannot skip.
+            // Check if game is already over (timer etc)
+            if (gameOver) return;
+
+            // Reset answer state
+            answered = false;
+            selectedOptions.clear();
+            // Enable buttons
+            submitBtn.disabled = false;
+            skipBtn.disabled = (skipsLeft <= 0); // disable if no skips
+
+            // Get next question
+            currentQuestion = gameQuestionQueue.shift();
+
+            // Set difficulty badge
+            currentDifficulty = currentQuestion.difficulty;
+            difficultyBadge.textContent = currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1);
+
+            // Update hint
+            hintText.textContent = `“${currentQuestion.hint}”`;
+
+            // Build option buttons
+            optionsGrid.innerHTML = '';
+            QUADS.forEach(quad => {
+                const btn = document.createElement('div');
+                btn.classList.add('option-btn');
+                btn.dataset.quad = quad;
+                btn.textContent = quad.charAt(0).toUpperCase() + quad.slice(1);
+                btn.addEventListener('click', () => toggleOption(quad, btn));
+                optionsGrid.appendChild(btn);
+            });
+
+            // Clear feedback and diagram
+            feedbackPanel.innerHTML = `Select all quadrilaterals that match the clue. (You can pick multiple)`;
+            diagramBox.innerHTML = `<div class="diagram-caption">✏️ Graphical explanation appears here</div>`;
+
+            // Reset timer if not running? we keep timer running if it was running.
+            // But we should not reset time; timer continues from where it was.
+        }
+
+        function toggleOption(quad, btn) {
+            if (!gameActive || gameOver || answered) return;
+            if (selectedOptions.has(quad)) {
+                selectedOptions.delete(quad);
+                btn.classList.remove('selected');
+            } else {
+                selectedOptions.add(quad);
+                btn.classList.add('selected');
+            }
+        }
+
+        // Submit answer
+        function submitAnswer() {
+            if (!gameActive || gameOver || answered || !currentQuestion) return;
+
+            // Mark answered
+            answered = true;
+            submitBtn.disabled = true;
+            skipBtn.disabled = true; // can't skip after answering
+
+            const correctSet = new Set(currentQuestion.answers);
+            const selectedArray = Array.from(selectedOptions);
+
+            // Check correctness: selected must exactly equal correctSet (no extra, no missing)
+            let isCorrect = true;
+            if (selectedOptions.size !== correctSet.size) {
+                isCorrect = false;
+            } else {
+                for (let q of correctSet) {
+                    if (!selectedOptions.has(q)) {
+                        isCorrect = false;
+                        break;
+                    }
+                }
+            }
+
+            // Update score
+            if (isCorrect) {
+                score += 10;
+                scoreDisplay.textContent = `🏆 ${score}`;
+            }
+
+            // Visual feedback on buttons
+            const optionBtns = optionsGrid.querySelectorAll('.option-btn');
+            optionBtns.forEach(btn => {
+                const quad = btn.dataset.quad;
+                const isCorrectQuad = correctSet.has(quad);
+                const isSelected = selectedOptions.has(quad);
+
+                if (isCorrectQuad) {
+                    btn.classList.add('correct-highlight');
+                } else if (isSelected && !isCorrectQuad) {
+                    btn.classList.add('wrong-highlight');
+                }
+                // Keep selected class for styling? we'll keep but override with highlights
+                btn.classList.remove('selected');
+            });
+
+            // Show feedback
+            const correctNames = currentQuestion.answers.map(q => q.charAt(0).toUpperCase() + q.slice(1)).join(', ');
+            const status = isCorrect ? '✅ Correct!' : '❌ Incorrect.';
+            feedbackPanel.innerHTML = `<strong>${status}</strong> The correct answer${currentQuestion.answers.length > 1 ? 's are' : ' is'}: ${correctNames}.`;
+
+            // Show diagram
+            showDiagram(currentQuestion.diagram, correctNames);
+
+            // After a delay, load next question if game still active (unless timer stops game)
+            // But we don't auto-load; player must press something? We have no "next" button.
+            // So we need to either auto-advance or provide a next button. According to spec, players skip or answer more than one question until stopwatch stops.
+            // So we need to auto-advance after a short delay, or let them press something? They can't press submit again.
+            // We'll auto-advance after 2.2 seconds, but we also need to check if timer stops game.
+            // We'll use a short timeout.
+            if (gameActive && !gameOver) {
+                setTimeout(() => {
+                    if (gameActive && !gameOver) {
+                        // check if timer has already ended game
+                        loadNextQuestion();
+                    }
+                }, 2200);
+            }
+        }
+
+        // Skip question
+        function skipQuestion() {
+            if (!gameActive || gameOver || answered || !currentQuestion) return;
+            if (skipsLeft <= 0) return;
+
+            // Deduct life
+            skipsLeft--;
+            updateLivesDisplay();
+            skipCounter.textContent = `⏭️ Skips left: ${skipsLeft}`;
+            if (skipsLeft === 0) {
+                // no skips left; we can still answer
+            }
+
+            // Mark as answered (skipped)
+            answered = true;
+            submitBtn.disabled = true;
+            skipBtn.disabled = true;
+
+            // Show correct answers and diagram (like answering but no score change)
+            const correctSet = new Set(currentQuestion.answers);
+            const correctNames = currentQuestion.answers.map(q => q.charAt(0).toUpperCase() + q.slice(1)).join(', ');
+
+            // highlight correct options
+            const optionBtns = optionsGrid.querySelectorAll('.option-btn');
+            optionBtns.forEach(btn => {
+                const quad = btn.dataset.quad;
+                if (correctSet.has(quad)) {
+                    btn.classList.add('correct-highlight');
+                }
+                btn.classList.remove('selected');
+            });
+
+            feedbackPanel.innerHTML = `<strong>⏭️ Skipped.</strong> The correct answer${currentQuestion.answers.length > 1 ? 's are' : ' is'}: ${correctNames}.`;
+            showDiagram(currentQuestion.diagram, correctNames);
+
+            // auto-advance after 2.2s
+            if (gameActive && !gameOver) {
+                setTimeout(() => {
+                    if (gameActive && !gameOver) {
+                        loadNextQuestion();
+                    }
+                }, 2200);
+            }
+        }
+
+        // Update lives UI
+        function updateLivesDisplay() {
+            for (let i = 0; i < 5; i++) {
+                if (i < skipsLeft) {
+                    livesIcons[i].classList.remove('dead');
+                } else {
+                    livesIcons[i].classList.add('dead');
+                }
+            }
+        }
+
+        // Show a simple SVG diagram based on type
+        function showDiagram(type, correctNames) {
+            let svg = '';
+            const stroke = '#8fd6ff';
+            const fill = 'rgba(80, 180, 255, 0.15)';
+            const label = correctNames;
+
+            if (type === 'square') {
+                svg = `<svg width="160" height="160" viewBox="0 0 160 160">
+                    <rect x="30" y="30" width="100" height="100" fill="${fill}" stroke="${stroke}" stroke-width="3"/>
+                    <line x1="30" y1="30" x2="130" y2="130" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <line x1="130" y1="30" x2="30" y2="130" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <text x="80" y="150" fill="#b3e0ff" font-size="14" text-anchor="middle">${label}</text>
+                </svg>`;
+            } else if (type === 'rectangle') {
+                svg = `<svg width="180" height="140" viewBox="0 0 180 140">
+                    <rect x="20" y="30" width="140" height="80" fill="${fill}" stroke="${stroke}" stroke-width="3"/>
+                    <line x1="20" y1="30" x2="160" y2="110" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <line x1="160" y1="30" x2="20" y2="110" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <text x="90" y="130" fill="#b3e0ff" font-size="14" text-anchor="middle">${label}</text>
+                </svg>`;
+            } else if (type === 'rhombus') {
+                svg = `<svg width="160" height="160" viewBox="0 0 160 160">
+                    <polygon points="80,20 140,80 80,140 20,80" fill="${fill}" stroke="${stroke}" stroke-width="3"/>
+                    <line x1="80" y1="20" x2="80" y2="140" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <line x1="20" y1="80" x2="140" y2="80" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <text x="80" y="155" fill="#b3e0ff" font-size="14" text-anchor="middle">${label}</text>
+                </svg>`;
+            } else if (type === 'parallelogram') {
+                svg = `<svg width="180" height="140" viewBox="0 0 180 140">
+                    <polygon points="40,30 160,30 140,100 20,100" fill="${fill}" stroke="${stroke}" stroke-width="3"/>
+                    <line x1="40" y1="30" x2="140" y2="100" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <line x1="160" y1="30" x2="20" y2="100" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <text x="90" y="125" fill="#b3e0ff" font-size="14" text-anchor="middle">${label}</text>
+                </svg>`;
+            } else if (type === 'kite') {
+                svg = `<svg width="160" height="160" viewBox="0 0 160 160">
+                    <polygon points="80,20 140,70 80,140 20,70" fill="${fill}" stroke="${stroke}" stroke-width="3"/>
+                    <line x1="80" y1="20" x2="80" y2="140" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <line x1="20" y1="70" x2="140" y2="70" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <text x="80" y="155" fill="#b3e0ff" font-size="14" text-anchor="middle">${label}</text>
+                </svg>`;
+            } else { // trapezium
+                svg = `<svg width="180" height="140" viewBox="0 0 180 140">
+                    <polygon points="60,30 120,30 160,100 20,100" fill="${fill}" stroke="${stroke}" stroke-width="3"/>
+                    <line x1="60" y1="30" x2="20" y2="100" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <line x1="120" y1="30" x2="160" y2="100" stroke="#ffb86b" stroke-width="2" stroke-dasharray="6 4"/>
+                    <text x="90" y="125" fill="#b3e0ff" font-size="14" text-anchor="middle">${label}</text>
+                </svg>`;
+            }
+            diagramBox.innerHTML = svg;
+        }
+
+        // End game
+        function endGame(message) {
+            if (gameOver) return;
+            gameOver = true;
+            gameActive = false;
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerRunning = false;
+            startPauseBtn.textContent = '▶ Start';
+            // Disable interactions
+            submitBtn.disabled = true;
+            skipBtn.disabled = true;
+            gameOverMsg.textContent = message + ` Final score: ${score}`;
+            feedbackPanel.innerHTML += '<br><strong>Game finished.</strong>';
+        }
+
+        // Timer functions
+        function startTimer() {
+            if (timerRunning || gameOver) return;
+            if (timeLeft <= 0) {
+                // restart? we reset timer first
+                resetTimer();
+            }
+            timerRunning = true;
+            startPauseBtn.textContent = '⏸ Pause';
+            timerInterval = setInterval(() => {
+                if (!gameActive) return;
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    timerRunning = false;
+                    timerDisplay.textContent = '0';
+                    startPauseBtn.textContent = '▶ Start';
+                    endGame('⏰ Time is up!');
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            timerRunning = false;
+            startPauseBtn.textContent = '▶ Start';
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            timeLeft = parseInt(timeLimitInput.value, 10) || 60;
+            if (timeLeft < 5) timeLeft = 5;
+            timerDisplay.textContent = timeLeft;
+            startPauseBtn.textContent = '▶ Start';
+            // If game over, we need to restart game? But reset timer alone doesn't restart game.
+            // We'll just reset the timer value.
+        }
+
+        // Stopwatch control: start/pause toggle
+        function toggleTimer() {
+            if (gameOver) return;
+            if (timerRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        // Reset game (full reset)
+        function fullReset() {
+            pauseTimer();
+            initGame();
+        }
+
+        // ---------- EVENT LISTENERS ----------
+        startPauseBtn.addEventListener('click', toggleTimer);
+
+        resetTimerBtn.addEventListener('click', () => {
+            // reset timer only, not game
+            pauseTimer();
+            timeLeft = parseInt(timeLimitInput.value, 10) || 60;
+            if (timeLeft < 5) timeLeft = 5;
+            timerDisplay.textContent = timeLeft;
+        });
+
+        timeLimitInput.addEventListener('change', () => {
+            let val = parseInt(timeLimitInput.value, 10);
+            if (isNaN(val) || val < 10) val = 10;
+            if (val > 180) val = 180;
+            timeLimitInput.value = val;
+            if (!timerRunning && !gameOver) {
+                timeLeft = val;
+                timerDisplay.textContent = timeLeft;
+            }
+        });
+
+        submitBtn.addEventListener('click', submitAnswer);
+        skipBtn.addEventListener('click', skipQuestion);
+
+        // Modify skip button to also check for skips left
+        // Reassign skip listener to incorporate the check
+        const originalSkip = skipBtn.click;
+        skipBtn.onclick = (e) => {
+            e.preventDefault();
+            if (skipsLeft <= 0) {
+                feedbackPanel.innerHTML = '❌ No skips remaining! You must answer.';
+                return;
+            }
+            skipQuestion();
+        };
+        skipBtn.onclick = skipQuestion; // we handle inside
+
+        // also reset game on load
+        window.addEventListener('load', () => {
+            // Initialize with easy pool
+            initGame();
+            // override skip button to respect skips
+            skipBtn.onclick = () => {
+                if (!gameActive || gameOver || answered) return;
+                if (skipsLeft <= 0) {
+                    feedbackPanel.innerHTML = '❌ No skips remaining! You must answer.';
+                    return;
+                }
+                skipQuestion();
+            };
+            submitBtn.onclick = submitAnswer;
+
+            // Ensure skip button disabled state updates
+        });
+
+        // Override skip logic inside skipQuestion to also update skip button state
+        // We'll wrap skipQuestion
+        const originalSkipQuestion = skipQuestion;
+        skipQuestion = function() {
+            if (!gameActive || gameOver || answered || !currentQuestion) return;
+            if (skipsLeft <= 0) {
+                feedbackPanel.innerHTML = '❌ No skips remaining!';
+                return;
+            }
+            // Deduct life
+            skipsLeft--;
+            updateLivesDisplay();
+            skipCounter.textContent = `⏭️ Skips left: ${skipsLeft}`;
+            if (skipsLeft === 0) {
+                skipBtn.disabled = true; // disable skip button
+            }
+            // Mark as answered (skipped)
+            answered = true;
+            submitBtn.disabled = true;
+            skipBtn.disabled = true;
+
+            const correctSet = new Set(currentQuestion.answers);
+            const correctNames = currentQuestion.answers.map(q => q.charAt(0).toUpperCase() + q.slice(1)).join(', ');
+
+            const optionBtns = optionsGrid.querySelectorAll('.option-btn');
+            optionBtns.forEach(btn => {
+                const quad = btn.dataset.quad;
+                if (correctSet.has(quad)) {
+                    btn.classList.add('correct-highlight');
+                }
+                btn.classList.remove('selected');
+            });
+
+            feedbackPanel.innerHTML = `<strong>⏭️ Skipped.</strong> The correct answer${currentQuestion.answers.length > 1 ? 's are' : ' is'}: ${correctNames}.`;
+            showDiagram(currentQuestion.diagram, correctNames);
+
+            if (gameActive && !gameOver) {
+                setTimeout(() => {
+                    if (gameActive && !gameOver) {
+                        loadNextQuestion();
+                    }
+                }, 2200);
+            }
+        };
+
+        // Reassign skip button
+        skipBtn.onclick = skipQuestion;
+
+        // adjust loadNextQuestion to enable skip if skips left > 0
+        const originalLoadNext = loadNextQuestion;
+        loadNextQuestion = function() {
+            if (!gameActive || gameOver) return;
+            answered = false;
+            selectedOptions.clear();
+            submitBtn.disabled = false;
+            skipBtn.disabled = (skipsLeft <= 0);
+
+            if (gameQuestionQueue.length === 0) {
+                endGame('🏁 No more questions! Game over.');
+                return;
+            }
+            currentQuestion = gameQuestionQueue.shift();
+            currentDifficulty = currentQuestion.difficulty;
+            difficultyBadge.textContent = currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1);
+            hintText.textContent = `“${currentQuestion.hint}”`;
+
+            optionsGrid.innerHTML = '';
+            QUADS.forEach(quad => {
+                const btn = document.createElement('div');
+                btn.classList.add('option-btn');
+                btn.dataset.quad = quad;
+                btn.textContent = quad.charAt(0).toUpperCase() + quad.slice(1);
+                btn.addEventListener('click', () => toggleOption(quad, btn));
+                optionsGrid.appendChild(btn);
+            });
+
+            feedbackPanel.innerHTML = `Select all quadrilaterals that match the clue. (You can pick multiple)`;
+            diagramBox.innerHTML = `<div class="diagram-caption">✏️ Graphical explanation appears here</div>`;
+        };
+
+        // Patch initGame to reset skip counter display and lives
+        const originalInitGame = initGame;
+        initGame = function() {
+            score = 0;
+            skipsLeft = 5;
+            gameOver = false;
+            answered = false;
+            selectedOptions.clear();
+            gameActive = true;
+            timerRunning = false;
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timeLeft = parseInt(timeLimitInput.value, 10) || 60;
+            timerDisplay.textContent = timeLeft;
+            startPauseBtn.textContent = '▶ Start';
+            gameOverMsg.textContent = '';
+            livesIcons.forEach(icon => icon.classList.remove('dead'));
+            skipCounter.textContent = `⏭️ Skips left: ${skipsLeft}`;
+            scoreDisplay.textContent = `🏆 ${score}`;
+
+            // Shuffle all questions
+            gameQuestionQueue = shuffleArray([...RAW_QUESTIONS]);
+            loadNextQuestion();
+        };
+
+        // ensure game starts on load
+        window.onload = () => {
+            initGame();
+            // final skip button assignment
+            skipBtn.onclick = skipQuestion;
+            submitBtn.onclick = submitAnswer;
+        };
+
+        // Also call init on script load (in case load already fired)
+        initGame();
+    })();
+</script>
+</body>
+</html>
